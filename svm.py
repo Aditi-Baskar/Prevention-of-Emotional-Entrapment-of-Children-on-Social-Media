@@ -33,4 +33,3 @@ def func(table, sender):
         sql = "UPDATE {0} set Grooming_Not='No' WHERE Sender=%s".format(table) %sender
     mycursor.execute(sql)
     mydb.commit()
-
