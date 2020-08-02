@@ -16,8 +16,7 @@ from nltk.tokenize import word_tokenize
 import re
 import liwc
 import mysql.connector
-
-
+ 
 mydb = mysql.connector.connect(
     host="localhost",
     user="root",
@@ -294,7 +293,6 @@ def age_check(path,id,id1):
 
     os.remove(file_name1)
     os.remove('C:\\Users\\Kripa\\Desktop\\'+subid+'1.csv')
-
 
 
 
