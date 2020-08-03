@@ -8,10 +8,15 @@ Our Project consists of 2 major functionalities:
 
 The following files have been used for the project:
 
-fchatroom.py: This module has the chatroom code and performs all the Backend operations including the DB commands.
-client.py: Has the client side code local chatroom.
-age1.py: The module for age detection using DNN(21.
-svm.py: Has the svm classifier code for detecting if the conversation is grooming or not.
-svmtest.py: For testing the svm classifier.
-mail.py: Used for sending alert messages to the respective authorities.
+1. fchatroom.py: This module has the chatroom code and performs all the Backend operations including the DB commands.
+
+2. client.py: Has the client side code local chatroom.
+
+3. age1.py: The module for age detection using DNN(21).
+
+4. svm.py: Has the svm classifier code for detecting if the conversation is grooming or not.
+
+5. svmtest.py: For testing the svm classifier.
+
+6. mail.py: Used for sending alert messages to the respective authorities.
   
