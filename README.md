@@ -27,3 +27,5 @@ The following files have been used for the project:
 9.mail.py: Used for sending alert messages to the respective authorities.
 
 10.bigdic.dic: The dictionary of all english words, including slang words and the coressponding stages.
+
+11.svm.pkl: Contains trained model.
