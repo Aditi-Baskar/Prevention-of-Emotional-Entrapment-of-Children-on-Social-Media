@@ -1,4 +1,6 @@
+#Importing packages
 from flask import Flask, request, render_template
+#Establishing Database connection
 import mysql.connector
 
 mydb = mysql.connector.connect(
@@ -27,6 +29,7 @@ import enchant
 from googletrans import Translator
 from datetime import date
 
+#Including translator for native languages
 translator = Translator()
 pwl = enchant.request_pwl_dict("C:\\Users\\Kripa\\Desktop\\englang.txt")
 
@@ -66,6 +69,7 @@ def listtostring(s):
     str1 = " "
     return (str1.join(s))
 
+#Performing Login UI connectivity
 app = Flask(__name__)
 from flask_socketio import SocketIO
 app.config['SECRET_KEY'] = 'vnkdjnfjknfl1232#'
