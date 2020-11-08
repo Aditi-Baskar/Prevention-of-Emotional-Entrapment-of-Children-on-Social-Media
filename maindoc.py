@@ -869,18 +869,33 @@ class DemoApp(MDApp):
         '''
         self.exit_manager()
 
-        global finalpath
-        punc = '''/~!'''
+       global finalpath
+        punc = '''/~$%^'''
+        #remove '/' from the path
         for ele in path:
             if ele in punc:
                 path1 = path.replace(ele, "")
+        #path1 -> '/' symbol removed filepath  /Users\HP\Desktop\exconvo.txt to Users\HP\Desktop\exconvo.txt
+
         tmplist = path1.split(os.sep)
+        #splits the path and is put in the list tmplist
+        #Users\HP\Desktop\exconvo.txt to ['Users','HP','Desktop','exconvo.txt']
+
         #print(tmplist)
         finalpath=""
         for wrd in tmplist:
             finalpath = finalpath+r"\\"+wrd
         finalpath="C:"+finalpath
-        #print(finalpath)
+        #print(finalpath)   #C:\\Users\HP\Desktop\exconvo.txt
+        with open(finalpath, 'r') as in_file:
+            stripped = (line.strip() for line in in_file)
+            lines = (line.split(",") for line in stripped if line)
+
+            with open('C:\\Users\\HP\\Desktop\\convo.csv', 'w', newline='') as out_file:
+                writer = csv.writer(out_file)
+                writer.writerow(('name', 'msg'))
+                writer.writerows(lines)
+
         toast(finalpath)
 
     def exit_manager(self, *args):
