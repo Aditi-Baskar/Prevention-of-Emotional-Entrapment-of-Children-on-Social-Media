@@ -21,7 +21,7 @@ def read_template(message):
     return Template(template_file_content)
 
 #main function
-def main_func(victim,predator):
+def main_func(victim,v_no,predator,a_no,reason,tname):
     MY_ADDRESS="axkatey@gmail.com"
     MY_PASSWORD="iamaxe#4"
     victim = str(victim)
@@ -33,14 +33,20 @@ def main_func(victim,predator):
 
 #function calls to get contacts and message from the respective text files
     names,emails=get_contacts(r"C:\Users\kripa\Desktop\contacts.txt")
-    message_template=read_template(r"C:\Users\kripa\Desktop\message.txt")
+    message_template=read_template("C:\\Users\\kripa\\Desktop\\"+tname+".txt")
 
     from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
 
     for name,email in zip(names, emails):
         msg=MIMEMultipart()  #create message
-        message = message_template.substitute(PERSON_NAME=name.title(), VICTIM_NAME=victim.title(), PREDATOR_NAME=predator.title())
+        if tname=="message":
+            message = message_template.substitute(PERSON_NAME=name.title(), VICTIM_NAME=victim.title(), VICTIM_NUMBER= v_no.title(), PREDATOR_NAME=predator.title(), PREDATOR_NUMBER= a_no.title(), REASON= reason.title())
+        else:
+            message = message_template.substitute(PERSON_NAME=name.title(), VICTIM_NAME=victim.title(),
+                                                  VICTIM_NUMBER=v_no.title(), PREDATOR_NAME=predator.title(),
+                                                  )
+
 
         msg['From']=MY_ADDRESS
         msg['To']=email

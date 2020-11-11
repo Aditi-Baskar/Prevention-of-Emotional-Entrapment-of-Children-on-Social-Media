@@ -50,15 +50,26 @@ MDTextField:
     size_hint_x:None
     width:250
 """
+age_input="""
+MDTextField:
+    hint_text: "Enter age"
+    helper_text: "It must be a number"
+    helper_text_mode: "on_focus"
+    required: True
+    icon_right: "number"
+    icon_right_color: [1,1,1,1]
+    pos_hint:{'center_x': 0.5, 'center_y': 0.5}
+    size_hint_x:None
+    width:250
+"""
 email_input = """
 MDTextField:
     hint_text: "Enter email id"
-    helper_text: "Optional"
     helper_text_mode: "on_focus"
     required: True
     icon_right: "email"
     icon_right_color: [1,1,1,1]
-    pos_hint:{'center_x': 0.5, 'center_y': 0.5}
+    pos_hint:{'center_x': 0.5, 'center_y': 0.4}
     size_hint_x:None
     width:250
 """
@@ -71,7 +82,7 @@ MDTextField:
     required: True
     icon_right: "lock-outline"
     icon_right_color: [1,1,1,1]
-    pos_hint:{'center_x': 0.5, 'center_y': 0.4}
+    pos_hint:{'center_x': 0.5, 'center_y': 0.3}
     size_hint_x:None
     width:250
 """

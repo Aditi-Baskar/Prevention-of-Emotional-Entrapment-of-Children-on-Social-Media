@@ -5,21 +5,106 @@ from kivy.core.window import Window
 from kivymd.theming import ThemableBehavior
 from kivymd.uix.filemanager import MDFileManager
 from kivymd.uix.boxlayout import BoxLayout
-from kivy.uix.scrollview import ScrollView
 from kivymd.toast import toast
 from kivy.uix.screenmanager import ScreenManager
-from kivymd.uix.button import MDRectangleFlatButton, MDFlatButton, MDRaisedButton, MDFillRoundFlatButton
+from kivymd.uix.button import MDRectangleFlatButton, MDFlatButton
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.list import MDList
+from kivymd.uix.list import OneLineListItem, TwoLineListItem, ThreeLineListItem
 from kivymd.uix.taptargetview import MDTapTargetView
 import helpers
 import os
+import mail
+import urllib3
+import joblib
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+from ibm_watson import NaturalLanguageUnderstandingV1
+#An IBM CLOUD SERVICE
+from ibm_cloud_sdk_core.authenticators import IAMAuthenticator
+from ibm_watson.natural_language_understanding_v1 import Features, EntitiesOptions, KeywordsOptions, CategoriesOptions, ConceptsOptions, EmotionOptions, RelationsOptions, SemanticRolesOptions, SentimentOptions
+from ibm_watson import IAMTokenManager
+from ibm_cloud_sdk_core.authenticators import BearerTokenAuthenticator
+import nltk
+nltk.download('stopwords')
+nltk.download('averaged_perceptron_tagger')
+import pandas as pd
+import gensim
+import gensim.corpora as corpora
+
+punctuations = '''!()-[]{};:'"\,<>./?@#$%^&*_~'''
+
+import nltk
+nltk.download('wordnet')
+nltk.download('stopwords')
+nltk.download('averaged_perceptron_tagger')
+import csv
+from nltk.tokenize import RegexpTokenizer
+from nltk.stem import WordNetLemmatizer
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from stop_words import get_stop_words
 import re
+import liwc
+from array import *
+
+tokenizer = RegexpTokenizer(r'\w+')
+en_stop = get_stop_words('en')
+en_stop.extend(['from', 'subject', 're', 'edu', 'use'])
+texts = []
+
+tokenizer = RegexpTokenizer(r'\w+')
+from stop_words import get_stop_words
+
+en_stop = get_stop_words('en')
+en_stop.extend(['from', 'subject', 're', 'edu', 'use'])
+
+lemmatizer = WordNetLemmatizer()
+texts = []
+from nltk.corpus import wordnet
+
+def get_wordnet_pos(treebank_tag):
+    if treebank_tag.startswith('J'):
+        return wordnet.ADJ
+    elif treebank_tag.startswith('V'):
+        return wordnet.VERB
+    elif treebank_tag.startswith('N'):
+        return wordnet.NOUN
+    elif treebank_tag.startswith('R'):
+        return wordnet.ADV
+    else:
+        return None
+
+#ibm watson access keys
+authenticator = IAMAuthenticator('mKzR3k6BF2W3tMUmoX3_Xvxze4LL0-f_q8FM5QMsFIFY')
+natural_language_understanding = NaturalLanguageUnderstandingV1(
+    version='2019-07-12',
+    authenticator=authenticator
+)
+
+iam_token_manager = IAMTokenManager(apikey='mKzR3k6BF2W3tMUmoX3_Xvxze4LL0-f_q8FM5QMsFIFY')
+token = iam_token_manager.get_token()
+authenticator1 = BearerTokenAuthenticator(token)
+natural_language_understanding1 = NaturalLanguageUnderstandingV1(version='2019-07-12',
+                        authenticator=authenticator1)
+natural_language_understanding.set_service_url(
+            'https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/c70c1850-5873-495c-b449-d84d30415f06')
+natural_language_understanding.set_disable_ssl_verification(True)
+
+
+
+def listtostring(s):
+    str1 = " "
+    return (str1.join(s))
+
+
+
+
 finalpath=""
 regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w{2,3}$'
 
 Window.size = (300, 500)
 
+#HOME SCREEN
 navigation_helper = """
 Screen:
     id: home
@@ -33,7 +118,6 @@ Screen:
                         title: "HOME"
                         elevation: 10
                         left_action_items: [['menu', lambda x: nav_drawer.toggle_nav_drawer()]]
-
                     Widget:
                     DrawerList:
                         id: features
@@ -44,21 +128,18 @@ Screen:
                                 IconLeftWidget:
                                     icon: "chat-processing"
                                     on_release: root.manager.current = 'conv_upload'
-
                             OneLineIconListItem:
                                 text: "Stats"
                                 on_release: root.manager.current = 'news_home'
                                 IconLeftWidget:
                                     icon: "chart-line"
                                     on_release: root.manager.current = 'news_home'
-
                             OneLineIconListItem:
                                 text: "Report Portal"
                                 on_release: root.manager.current = 'portal'
                                 IconLeftWidget:
                                     icon: "notebook-outline"
                                     on_release: root.manager.current = 'portal'
-
                     ScrollView:
                     MDBottomNavigation:
                         MDBottomNavigationItem:
@@ -86,7 +167,6 @@ Screen:
                     font_style: "H6"
                     size_hint_y: None
                     height: self.texture_size[1]
-
                 ScrollView:
                     DrawerList:
                         id: md_list
@@ -113,6 +193,7 @@ Screen:
                                     icon: "login"
 """
 
+#UPLOAD FILE SCREEN
 conv_upload = """
 Screen:
     id: conv_upload
@@ -149,6 +230,7 @@ Screen:
                 on_action_button: root.manager.current = 'home'
 """
 
+#REPORT PORTAL
 screen_helper = """
 Screen:
     id: portal
@@ -167,6 +249,7 @@ Screen:
                 on_action_button: root.manager.current = 'home'
 """
 
+#LOGIN SCREEN
 login_helper = """
 Screen:
     id: login
@@ -187,6 +270,7 @@ Screen:
                 type: 'bottom'
 """
 
+#SIGNUP PAGE
 signup_helper = """
 Screen:
     id: signup
@@ -203,6 +287,7 @@ Screen:
                 type: 'bottom'
 """
 
+#STATISTICS SCREEN
 newsscraping = """
 Screen:
     id: news_home
@@ -282,6 +367,7 @@ Screen:
                     height: self.texture_size[1]
 """
 
+#STATS 1
 screen_helper4 = """
 Screen:
     id: news_1
@@ -301,7 +387,6 @@ Screen:
             halign: "center"
             font_style: "H6"
             theme_text_color: "Custom"
-
         Widget:
         MDBottomAppBar:
             MDToolbar:
@@ -309,6 +394,8 @@ Screen:
                 type: 'bottom'
                 on_action_button: root.manager.current = 'news_home'
 """
+
+#STATS 2
 screen_helper5 = """
 Screen:
     id: news_2
@@ -328,7 +415,6 @@ Screen:
             halign: "center"
             font_style: "H6"
             theme_text_color: "Custom"
-
         Widget:
         MDBottomAppBar:
             MDToolbar:
@@ -337,6 +423,7 @@ Screen:
                 on_action_button: root.manager.current = 'news_home'
 """
 
+#STATS 3
 screen_helper6 = """
 Screen:
     id: news_3
@@ -364,6 +451,7 @@ Screen:
                 on_action_button: root.manager.current = 'news_home'
 """
 
+#ANALYSER MAIN SCREEN
 conv_anal = """
 Screen:
     id: conv_home
@@ -371,8 +459,8 @@ Screen:
     NavigationLayout:
         ScreenManager:
             Screen:
-
                 BoxLayout:
+                    id:box
                     orientation: 'vertical'
                     MDToolbar:
                         title: 'CONVO-LYSER'
@@ -382,14 +470,10 @@ Screen:
                         text: ""
                         font_style:"H6"
                         halign: "center"
-
                     MDLabel:
-                        text: "272"
-                        font_style:"H1"
+                        text: "FEATURES"
                         halign: "center"
-                    MDLabel:
-                        text: "MESSAGES IN TOTAL"
-                        halign: "center"
+                        font_style: "H5"
                     BoxLayout:
                         orientation: 'horizontal'
                         MDFloatingActionButton:
@@ -402,64 +486,62 @@ Screen:
                         MDList:
                             OneLineIconListItem:
                                 text: "SENTIMENT ANALYSIS"
-                                on_release: root.manager.current = 'sent'
+                                on_release: root.manager.current = 'senti'
+                                on_release: app.emo_fn()
                                 IconLeftWidget:
                                     icon: "chart-pie"
-                                    on_release: root.manager.current = 'sent'
-
+                                    on_release: root.manager.current = 'senti'
+                                    
                             OneLineIconListItem:
                                 text: "EMOTIONAL ANALYSIS"
                                 on_release: root.manager.current = 'emo'
+                                on_release: app.emo_fn()
                                 IconLeftWidget:
                                     icon: "chart-line"
                                     on_release: root.manager.current = 'emo'
-
                             OneLineIconListItem:
                                 text: "ASPECT BASED ANALYSIS"
                                 on_release: root.manager.current = 'aspect'
+                                on_release: app.aspect_fn()
                                 IconLeftWidget:
                                     icon: "chart-bar"
                                     on_release: root.manager.current = 'aspect'
-
+                            OneLineIconListItem:
+                                text: "SEMANTIC ANALYSIS"
+                                on_release: root.manager.current = 'lda'
+                                on_release: app.lda_fn()
+                                IconLeftWidget:
+                                    icon: "group"
+                                    on_release: root.manager.current = 'lda'
                     ScrollView:
                     MDBottomNavigation:
-
                         MDBottomNavigationItem:
                             name: 'query'
                             icon: 'comment-question'
-
                         MDBottomNavigationItem:
                             name: 'home'
                             icon: 'home'
                             on_tab_release: root.manager.current = 'home'
-
-
         MDNavigationDrawer:
             id: nav_drawer
-
-
             ContentNavigationDrawer:
                 orientation: 'vertical'
                 padding: "8dp"
                 spacing: "8dp"
-
                 MDLabel:
                     text: "CONVO-LYSER"
-
-
                     theme_text_color: "Custom"
                     text_color: 1, 1, 1, 1
                     font_style: "H6"
                     size_hint_y: None
                     height: self.texture_size[1]
-
-
 """
 
+#SENT ANALYSER
 screen_helper1 = """
 Screen:
-    id: sent
-    name: 'sent'
+    id: senti
+    name: 'senti'
     BoxLayout:
         orientation: 'vertical'
         MDToolbar:
@@ -468,33 +550,21 @@ Screen:
             elevation:10
         MDLabel:
             text: ""
-            font_style:"H6"
+            font_style:"H3"
             halign: "center"
-
-        MDLabel:
-            text: "POSITIVE: 9.98%"
-            halign: "center"
-            font_style: "H5"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "NEGATIVE: 65.3%"
-            halign: "center"
-            font_style: "H5"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "NEUTRAL: 24.7%"
-            halign: "center"
-            font_style: "H5"
-            theme_text_color: "Custom"
+        MDList:
+            id: sentimentlist
+            name: 'sentimentlist'
+        ScrollView:
         Widget:
         MDBottomAppBar:
             MDToolbar:
                 icon: 'home'
                 type: 'bottom'
                 on_action_button: root.manager.current = 'conv_home'
-
-
 """
+
+#EMOTION ANALYSER
 screen_helper2 = """
 Screen:
     id: emo
@@ -507,43 +577,21 @@ Screen:
             elevation:10
         MDLabel:
             text: ""
-            font_style:"H6"
+            font_style:"H3"
             halign: "center"
-        MDLabel:
-            text: "SADNESS: 29%"
-            halign: "center"
-            font_style: "H5"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "JOY: 20%"
-            halign: "center"
-            font_style: "H5"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "FEAR: 10%"
-            halign: "center"
-            font_style: "H5"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "DISGUST: 26%"
-            halign: "center"
-            font_style: "H5"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "ANGER: 15%"
-            halign: "center"
-            font_style: "H5"
-            theme_text_color: "Custom"
+        MDList:
+            id: emotionallist
+            name: 'emotionallist'
+        ScrollView:
         Widget:
         MDBottomAppBar:
             MDToolbar:
                 icon: 'home'
                 type: 'bottom'
                 on_action_button: root.manager.current = 'conv_home'
-
-
 """
 
+#ASPECT ANALYSER
 screen_helper3 = """
 Screen:
     id: aspect
@@ -556,53 +604,46 @@ Screen:
             elevation:10
         MDLabel:
             text: ""
-            font_style:"H6"
+            font_style:"H3"
             halign: "center"
-        MDLabel:       
-            text: "ART & ENTERTAINMENT"
-            halign: "center"
-            font_style: "H6"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "HEALTH AND FITNESS"
-            halign: "center"
-            font_style: "H6"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "SOCIETY"
-            halign: "center"
-            font_style: "H6"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "EDUCATION"
-            halign: "center"
-            font_style: "H6"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "HOBBIES & INTERESTS"
-            halign: "center"
-            font_style: "H6"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "SPORTS"
-            halign: "center"
-            font_style: "H6"
-            theme_text_color: "Custom"
-        MDLabel:
-            text: "STYLE & FASHION"
-            halign: "center"
-            font_style: "H6"
-            theme_text_color: "Custom"
+        MDList:
+            id: aspectlist
+            name: 'aspectlist'
+        ScrollView:
         Widget:
         MDBottomAppBar:
             MDToolbar:
                 icon: 'home'
                 type: 'bottom'
                 on_action_button: root.manager.current = 'conv_home'
-
-
 """
 
+#SEMANTIC ANALYSER
+screen_helperlda = """
+Screen:
+    id: lda
+    name: 'lda'
+    BoxLayout:
+        orientation: 'vertical'
+        MDToolbar:
+            title: 'SEMANTIC ANALYSIS'
+            left_action_items: [["alert-circle-outline", lambda x: app.infolda()]]
+            elevation:10
+        MDLabel:
+            text: ""
+            font_style:"H3"
+            halign: "center"
+        MDList:
+            id: ldalist
+            name: 'ldalist'
+        ScrollView:
+        Widget:
+        MDBottomAppBar:
+            MDToolbar:
+                icon: 'home'
+                type: 'bottom'
+                on_action_button: root.manager.current = 'conv_home'
+"""
 
 class ContentNavigationDrawer(BoxLayout):
     pass
@@ -639,8 +680,9 @@ class DemoApp(MDApp):
         self.mycontact = Builder.load_string(helpers.mycontact_input)
         self.email = Builder.load_string(helpers.email_input)
         self.password = Builder.load_string(helpers.password_input)
+        self.age = Builder.load_string(helpers.age_input)
         button = MDRectangleFlatButton(text='Submit',
-                                       pos_hint={'center_x': 0.5, 'center_y': 0.3},
+                                       pos_hint={'center_x': 0.5, 'center_y': 0.2},
                                        on_release=self.sign_show_data
                                        )
 
@@ -648,6 +690,7 @@ class DemoApp(MDApp):
         screen.add_widget(self.mycontact)
         screen.add_widget(self.email)
         screen.add_widget(self.password)
+        screen.add_widget(self.age)
         screen.add_widget(button)
         sm.add_widget(screen)
 
@@ -673,25 +716,11 @@ class DemoApp(MDApp):
 
                                                widget_position="center", title_position="right_top",
                                                title_text_size="20sp", outer_radius=250, )
-        # self.tap_target_view = MDTapTargetView(widget=screen.ids.button,title_text="USER 2",description_text="154 MESSAGES",widget_position="right", outer_radius=100,)
-        sm.add_widget(screen)
-        screen = Builder.load_string(screen_helper1)
+
         sm.add_widget(screen)
         screen = Builder.load_string(conv_upload)
         sm.add_widget(screen)
-        screen = Builder.load_string(conv_anal)
-        self.tap_target_view = MDTapTargetView(widget=screen.ids.button, title_text="USER 1      USER 2",
-                                               description_text="   118                  154 \nMESSAGES    MESSAGES",
-                                               widget_position="center", title_position="right_top",
-                                               title_text_size="20sp", outer_radius=250, )
-        # self.tap_target_view = MDTapTargetView(widget=screen.ids.button,title_text="USER 2",description_text="154 MESSAGES",widget_position="right", outer_radius=100,)
-        sm.add_widget(screen)
-        screen = Builder.load_string(screen_helper1)
-        sm.add_widget(screen)
-        screen = Builder.load_string(screen_helper2)
-        sm.add_widget(screen)
-        screen = Builder.load_string(screen_helper3)
-        sm.add_widget(screen)
+
         screen = Builder.load_string(screen_helper4)
         sm.add_widget(screen)
         screen = Builder.load_string(screen_helper5)
@@ -710,14 +739,56 @@ class DemoApp(MDApp):
             select_path=self.select_path,
             ext=[".txt",".py", "kv"],
         )
+
+    #Sign up validation
+    def sign_show_data(self, obj):
+
+        if self.username.text != "" and self.mycontact.text != "" and self.email.text != "" and self.password.text != "":
+            if len(self.mycontact.text) == 10 and self.mycontact.text.isdigit() and self.age.text.isdigit():
+                if re.search(regex, self.email.text):
+                    if len(self.password.text) >= 8:
+                        print("USERNAME- " + self.username.text)
+
+                        print("CONTACT NUMBER- " + self.mycontact.text)
+
+                        print("EMAIL- " + self.email.text)
+                        print("PASSWORD- " + self.password.text)
+                        print("AGE- " + self.age.text)
+                        # self.reason.text, self.contact.text, self.username.text = ""
+                        #self.username.text = ""
+                        #self.mycontact.text = ""
+                        self.email.text = ""
+                        #self.age.text = ""
+                        user_error = ""
+                    else:
+                        user_error = "Please enter a valid password"
+                else:
+                    user_error = "Please enter a valid email id"
+            else:
+                user_error = "Please enter a valid contact number."
+
+
+        else:
+            user_error = "Please enter the required fields"
+        if user_error == "":
+            sm.switch_to(Builder.load_string(navigation_helper))
+        else:
+            self.dialog = MDDialog(
+                text=user_error, size_hint=(0.8, 1),
+                buttons=[MDFlatButton(text='Close', on_release=self.close_dialog)]
+            )
+            self.dialog.open()
+
+    #Report portal validation
     def show_data(self, obj):
 
         if self.contact.text != "" and self.reason.text != "":
             if len(self.contact.text) == 10 and self.contact.text.isdigit():
                 print("ABUSER NAME- " + self.abusername.text)
+                print(self.username.text,self.mycontact.text)
                 print("CONTACT NUMBER- " + self.contact.text)
                 print("REASON- " + self.reason.text)
-                # self.reason.text, self.contact.text, self.username.text = ""
+                mail.main_func(self.username.text,self.mycontact.text,self.abusername.text,self.contact.text,self.reason.text,"message")
                 self.abusername.text = ""
                 self.contact.text = ""
                 self.reason.text = ""
@@ -743,6 +814,7 @@ class DemoApp(MDApp):
         )
         self.dialog.open()
 
+    #Login validation
     def log_show_data(self, obj):
         if self.lusername.text != "" and self.lpassword.text != "":
             if len(self.lpassword.text) >= 8:
@@ -772,40 +844,7 @@ class DemoApp(MDApp):
 
         # do stuff after closing the dialog
 
-    def sign_show_data(self, obj):
 
-        if self.username.text != "" and self.mycontact.text != "" and self.email.text != "" and self.password.text != "":
-            if len(self.mycontact.text) == 10 and self.mycontact.text.isdigit():
-                if re.search(regex, self.email.text):
-                    if len(self.password.text) >= 8:
-
-                        print("USERNAME- " + self.username.text)
-                        print("CONTACT NUMBER- " + self.mycontact.text)
-                        print("EMAIL- " + self.email.text)
-                        print("PASSWORD- " + self.password.text)
-                        # self.reason.text, self.contact.text, self.username.text = ""
-                        self.username.text = ""
-                        self.mycontact.text = ""
-                        self.email.text = ""
-                        user_error = ""
-                    else:
-                        user_error = "Please enter a valid password"
-                else:
-                    user_error = "Please enter a valid email id"
-            else:
-                user_error = "Please enter a valid contact number."
-
-
-        else:
-            user_error = "Please enter the required fields"
-        if user_error == "":
-            sm.switch_to(Builder.load_string(navigation_helper))
-        else:
-            self.dialog = MDDialog(
-                text=user_error, size_hint=(0.8, 1),
-                buttons=[MDFlatButton(text='Close', on_release=self.close_dialog)]
-            )
-            self.dialog.open()
 
     def tap_target_start1(self):
         if self.tap_target_view.state == "close":
@@ -851,6 +890,14 @@ class DemoApp(MDApp):
         )
         self.dialog.open()
 
+    def infolda(self):
+        self.dialog = MDDialog(
+            text='Semantic analysis groups words which are used together frequently',
+            size_hint=(0.9, 0.5), radius=[20, 7, 20, 7],
+            buttons=[MDFlatButton(text='Close', on_release=self.close_dialog)]
+        )
+        self.dialog.open()
+
     def callback(self, instance):
         print("Button is pressed")
         print('The button % s state is <%s>' % (instance, instance.state))
@@ -860,43 +907,166 @@ class DemoApp(MDApp):
         self.file_manager.use_access = True
         self.manager_open = True
 
+    #Read the conversation and prepare conv_anal screen. Also check for grooming if applicable
     def select_path(self, path):
         '''It will be called when you click on the file name
         or the catalog selection button.
-
         :type path: str;
         :param path: path to the selected directory or file;
         '''
         self.exit_manager()
 
-       global finalpath
+        global finalpath
         punc = '''/~$%^'''
         #remove '/' from the path
         for ele in path:
             if ele in punc:
                 path1 = path.replace(ele, "")
-        #path1 -> '/' symbol removed filepath  /Users\HP\Desktop\exconvo.txt to Users\HP\Desktop\exconvo.txt
+        #path1 -> '/' symbol removed filepath  /Users\Kripa\Desktop\exconvo.txt to Users\Kripa\Desktop\exconvo.txt
 
         tmplist = path1.split(os.sep)
         #splits the path and is put in the list tmplist
-        #Users\HP\Desktop\exconvo.txt to ['Users','HP','Desktop','exconvo.txt']
+        #Users\Kripa\Desktop\exconvo.txt to ['Users','Kripa','Desktop','exconvo.txt']
 
-        #print(tmplist)
+
         finalpath=""
         for wrd in tmplist:
             finalpath = finalpath+r"\\"+wrd
         finalpath="C:"+finalpath
-        #print(finalpath)   #C:\\Users\HP\Desktop\exconvo.txt
+        #print(finalpath)   #C:\\Users\Kripa\Desktop\exconvo.txt
         with open(finalpath, 'r') as in_file:
             stripped = (line.strip() for line in in_file)
             lines = (line.split(",") for line in stripped if line)
 
-            with open('C:\\Users\\HP\\Desktop\\convo.csv', 'w', newline='') as out_file:
+            with open('C:\\Users\\Kripa\\Desktop\\convo.csv', 'w', newline='') as out_file:
                 writer = csv.writer(out_file)
                 writer.writerow(('name', 'msg'))
                 writer.writerows(lines)
 
+
+        ct=0
+        row_ct1=0
+        row_ct2=0
+        strname=""
+
+        #Get no.of messages for both users
+        with open("C:\\Users\\Kripa\Desktop\\convo.csv", 'r') as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+
+            for row in csv_reader:
+                # lets tokenise
+                if ct == 0 and row[0] != "name":
+                    strname = row[0]
+                    ct = ct + 1
+                if row[0] == strname:
+                    row_ct1 = row_ct1 + 1
+
+                else:
+                    row_ct2 = row_ct2 + 1
+
+        screen = Builder.load_string(conv_anal)
+
+        self.tap_target_view = MDTapTargetView(widget=screen.ids.button, title_text="USER 1      USER 2",
+                                               description_text="   "+str(row_ct1)+"                  "+str(row_ct2)+" \nMESSAGES    MESSAGES",
+                                               widget_position="center", title_position="right_top",
+                                               title_text_size="20sp", outer_radius=250, )
+
+        sm.add_widget(screen)
+
+        #GROOMING
+        if int(self.age.text) <18:
+            with open("C:\\Users\\Kripa\Desktop\\convo.csv") as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                pred_name=""
+                p_ct=0
+                for row in csv_reader:
+                    if p_ct==0 and row[0] != "name" and row[0]!=self.username.text:
+                        pred_name=row[0]
+                        p_ct= p_ct+1
+                    row[1] = row[1].lower()  # convert to lowercase
+
+                    lemr = ""
+                    for word in row[1].split():  # Lemmatisation
+                        lem = (lemmatizer.lemmatize(word, pos="v"))
+                        lem = (lemmatizer.lemmatize(lem))
+                        lemr = lemr + lem + " "
+
+                    no_punct = ""
+                    for char in lemr:  # Remove punctuation
+                        if char not in punctuations:
+                            no_punct = no_punct + char
+
+                    data = word_tokenize(no_punct)
+                    stopWords = set(stopwords.words('english'))
+                    wordsFiltered = []
+
+                    for w in data:  # Remove stopwords
+                        if w not in stopWords:
+                            wordsFiltered.append(w)
+                    fp = "C:\\Users\\Kripa\\Desktop\\exconvo2.csv"
+                    with open(fp, 'a+', newline='') as out_file:
+                        writer = csv.writer(out_file, delimiter=' ')
+                        writer.writerow(wordsFiltered[:20])
+
+            # liwc
+            def tokenize(text):
+                for match in re.finditer(r'\w+', text, re.UNICODE):
+                    yield match.group(0)
+
+
+
+            parse, category_names = liwc.load_token_parser("C:\\Users\\Kripa\\Desktop\\bigdic.dic")
+            cntt = array('i', [0, 0, 0, 0, 0, 0])  # Stages
+            predator = "C:\\Users\\Kripa\\Desktop\\exconvo2.csv"
+            with open(predator) as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+                ct = 0
+                i = 1
+                j = 0
+                for row in csv_reader:
+
+                    p = row.copy()
+                    p1 = listtostring(p).lower()
+                    p_token = tokenize(p1)
+                    from collections import Counter
+                    op1 = Counter(category for token in p_token for category in parse(token))
+                    op = dict(op1)
+                    l = list(op.keys())
+                    l.sort(reverse=True)
+                    if l:
+                        j = l[0]
+                    if j == "S1":
+                        cntt[0] = cntt[0] + 1
+                    if j == "S2":
+                        cntt[1] = cntt[1] + 1
+                    if j == "S3":
+                        cntt[2] = cntt[2] + 1
+                    if j == "S4":
+                        cntt[3] = cntt[3] + 1
+                    if j == "S5":
+                        cntt[4] = cntt[4] + 1
+                    if j == "S6":
+                        cntt[5] = cntt[5] + 1
+            #cntt[0]=807
+            #cntt[1]=396
+            #cntt[2] =87
+            #cntt[3] =79
+            #cntt[4] =38
+            #cntt[5] =226
+            clf = joblib.load('svm.pkl')
+            op = clf.predict([cntt])
+            if op== [1]:
+                mail.main_func(self.username.text,self.mycontact.text, pred_name,"", "", "message")
+                self.dialog = MDDialog(
+                    text="Grooming characteristics detected. Immediate responders have been informed.", size_hint=(0.8, 1),
+                    buttons=[MDFlatButton(text='Close', on_release=self.close_dialog), ]
+                )
+
+                self.dialog.open()
+
+
         toast(finalpath)
+        #return sm
 
     def exit_manager(self, *args):
         '''Called when the user reaches the root of the directory tree.'''
@@ -911,6 +1081,284 @@ class DemoApp(MDApp):
             if self.manager_open:
                 self.file_manager.back()
         return True
+
+    #Aspect analysis
+    def aspect_fn(self):
+        with open("C:\\Users\\Kripa\\Desktop\\convo.csv") as file:
+            data = list(csv.reader(file))
+
+        strin = " ".join(str(x) for x in data)
+
+        natural_language_understanding.set_service_url(
+            'https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/c70c1850-5873-495c-b449-d84d30415f06')
+        natural_language_understanding.set_disable_ssl_verification(True)
+        response = natural_language_understanding.analyze(
+            text=strin,
+            features=Features(
+                categories=CategoriesOptions(limit=3),
+            )).get_result()
+
+        cat1 = response['categories']
+
+        di1 = cat1[0]
+        di2 = cat1[1]
+        di3 = cat1[2]
+
+        str1= di1['label']
+        str11= str(di1['score'])
+        str2 = di2['label']
+        str21 = str(di2['score'])
+        str3 = di3['label']
+        str31 = str(di3['score'])
+
+        screen = Builder.load_string(screen_helper3)
+        screen.ids.aspectlist.add_widget(
+            TwoLineListItem(
+                text=str1,
+                secondary_text= str11
+
+            )
+        )
+        screen.ids.aspectlist.add_widget(
+            TwoLineListItem(
+                text=str2,
+                secondary_text=str21
+
+            )
+        )
+        screen.ids.aspectlist.add_widget(
+            TwoLineListItem(
+                text=str3,
+                secondary_text=str31
+
+            )
+        )
+
+        sm.add_widget(screen)
+
+    #Sentiment and emotiona enalysis
+    def emo_fn(self):
+        cn = cp = cng = e1 = e2 = e3 = e4 = e5 = 0
+        with open("C:\\Users\\Kripa\\Desktop\\convo.csv") as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+            for row in csv_reader:
+                j = 0
+                row = listtostring(row)
+                response = natural_language_understanding.analyze(
+                    text=row,
+                    language='en',
+                    features=Features(
+                        sentiment=SentimentOptions(),
+                        emotion=EmotionOptions(),
+                    )).get_result()
+
+                sen1 = response.get('sentiment').get('document').get('score')
+                sen2 = response.get('sentiment').get('document').get('label')
+                if sen1 == 0:
+                    cn += 1
+
+                elif sen1 > 0:
+                    cp += 1
+
+                else:
+                    cng += 1
+                op = response.get('emotion').get('document').get('emotion')
+
+                # Create a list of tuples sorted by index 1 i.e. value field
+                listofTuples = sorted(op.items(), reverse=True, key=lambda x: x[1])
+                ll = listofTuples[0]
+                d = dict(listofTuples)
+                for k, v in d.items():
+                    d1 = k
+                    d2 = v
+                    j += 1
+                    if j > 0:
+                        break
+                if d1 == 'sadness':
+                    e1 += 1
+                elif d1 == 'joy':
+                    e2 += 1
+                elif d1 == 'fear':
+                    e3 += 1
+                elif d1 == 'disgust':
+                    e4 += 1
+                else:
+                    e5 += 1
+
+
+
+        s = s1 = 0
+        s = cn + cng + cp
+        pp = (cp * 100) / s
+        ngp = (cng * 100) / s
+        np = (cn * 100) / s
+        s1 = e1 + e2 + e3 + e4 + e5
+        e1p = (e1 * 100) / s1
+        e2p = (e2 * 100) / s1
+        e3p = (e3 * 100) / s1
+        e4p = (e4 * 100) / s1
+        e5p = (e5 * 100) / s1
+
+
+
+
+        screen = Builder.load_string(screen_helper1)
+
+        neutral = "Neutral: " + str(round(np, 2))
+        pos = "Positive: " + str(round(pp, 2))
+        neg = "Negative: " + str(round(ngp, 2))
+
+        screen.ids.sentimentlist.add_widget(
+            OneLineListItem(
+                text=neutral,
+
+            )
+        )
+        screen.ids.sentimentlist.add_widget(
+            OneLineListItem(
+                text=pos,
+
+            )
+        )
+        screen.ids.sentimentlist.add_widget(
+            OneLineListItem(
+                text=neg,
+
+            )
+        )
+
+        sm.add_widget(screen)
+
+        screen = Builder.load_string(screen_helper2)
+
+        sad = "Sad: " + str(round(e1p, 2))
+        joy = "Joy: " + str(round(e2p, 2))
+        fear = "Fear: " + str(round(e3p, 2))
+        disgust = "Disgust: " + str(round(e4p, 2))
+        angry = "Angry: " + str(round(e5p, 2))
+
+        screen.ids.emotionallist.add_widget(
+            OneLineListItem(
+                text=sad,
+
+            )
+        )
+        screen.ids.emotionallist.add_widget(
+            OneLineListItem(
+                text=joy,
+
+            )
+        )
+        screen.ids.emotionallist.add_widget(
+            OneLineListItem(
+                text=fear,
+
+            )
+        )
+        screen.ids.emotionallist.add_widget(
+            OneLineListItem(
+                text=disgust,
+
+            )
+        )
+        screen.ids.emotionallist.add_widget(
+            OneLineListItem(
+                text=angry,
+
+            )
+        )
+
+        sm.add_widget(screen)
+
+    #Semantic analysis
+    def lda_fn(self):
+        screen = Builder.load_string(screen_helperlda)
+
+
+        with open("C:\\Users\\Kripa\Desktop\\convo.csv", 'r') as csv_file:
+            csv_reader = csv.reader(csv_file, delimiter=',')
+
+            for row in csv_reader:
+                # lets tokenise
+
+                raw = row[1]
+                tokens = tokenizer.tokenize(raw)
+
+
+
+                # remove stopwords
+                stopped_tokens = [i for i in tokens if not i in en_stop]
+
+
+
+                tagged = nltk.pos_tag(stopped_tokens)
+
+
+                for word, tag in tagged:
+                    w_tag = get_wordnet_pos(tag)
+                    if w_tag is None:
+                        lemmatized_tokens = [lemmatizer.lemmatize(word)]
+                    else:
+                        lemmatized_tokens = [lemmatizer.lemmatize(word, pos=w_tag)]
+
+
+
+                    texts.append(lemmatized_tokens)
+
+
+        # create_dict
+        id2word = corpora.Dictionary(texts)
+
+        # convert to document-term matrix
+        corpus = [id2word.doc2bow(text) for text in texts]
+
+        # generate lda
+        lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
+                                                    id2word=id2word,
+                                                    num_topics=5,
+                                                    passes=20)
+        #print(lda_model.print_topics(num_topics=5))
+
+        top_words_per_topic = []
+
+        # puting ouput to a csv file!
+        for t in range(lda_model.num_topics):
+            top_words_per_topic.extend([(t,) + x for x in lda_model.show_topic(t)])
+
+        x = pd.DataFrame(top_words_per_topic, columns=['Tno', 'Word', 'P'])
+        # .to_csv('C:\\Users\\Kripa\Desktop\\top_words.csv')
+        y = x['Word']
+
+        name1 = []
+        for ele in y:
+            name1.append(ele)
+
+        screen.ids.ldalist.add_widget(
+            ThreeLineListItem(
+                text="Group 1",
+                secondary_text=name1[0] + "," + name1[1] + "," + name1[2] + "," + name1[3] + "," + name1[4] + ",",
+                tertiary_text=name1[5] + "," + name1[6] + "," + name1[7] + "," + name1[8] + "," + name1[9]
+
+            )
+        )
+        screen.ids.ldalist.add_widget(
+            ThreeLineListItem(
+                text="Group 2",
+                secondary_text=name1[10] + "," + name1[11] + "," + name1[12] + "," + name1[13] + "," + name1[14] + ",",
+                tertiary_text=name1[15] + "," + name1[16] + "," + name1[17] + "," + name1[18] + "," + name1[19]
+
+            )
+        )
+        screen.ids.ldalist.add_widget(
+            ThreeLineListItem(
+                text="Group 3",
+                secondary_text=name1[20] + "," + name1[21] + "," + name1[22] + "," + name1[23] + "," + name1[24] + ",",
+                tertiary_text=name1[25] + "," + name1[26] + "," + name1[27] + "," + name1[28] + "," + name1[29]
+
+            )
+        )
+
+        sm.add_widget(screen)
 
 
 DemoApp().run()
