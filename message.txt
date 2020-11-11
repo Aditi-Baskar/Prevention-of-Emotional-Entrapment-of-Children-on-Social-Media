@@ -1,0 +1,10 @@
+Mr./Ms. ${PERSON_NAME},
+---------- The below content is highly confidential ----------
+Abusive characteristics have been reported in the conversation involving the following participants-
+ User: ${VICTIM_NAME}
+ User Number: ${VICTIM_NUMBER}
+ Suspected Abuser: ${PREDATOR_NAME}
+ Abuser's Number: ${PREDATOR_NUMBER}
+ Reason: ${REASON}
+
+Immediate action is advised.
