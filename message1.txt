@@ -1,0 +1,8 @@
+Mr./Ms. ${PERSON_NAME},
+---------- The below content is highly confidential ----------
+Grooming characteristics have been found in the conversation involving the following participants-
+ User: ${VICTIM_NAME}
+ User Number: ${VICTIM_NUMBER}
+ Suspected Paedophile: ${PREDATOR_NAME}
+
+Immediate action is advised.
